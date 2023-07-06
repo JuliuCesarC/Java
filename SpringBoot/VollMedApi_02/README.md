@@ -246,7 +246,7 @@ public class Usuario {
 }
 ```
 
-### Migration usuarios
+### Migration usuários
 
 O proximo passo é criar uma migration para adicionar a tabela *usuarios* no banco de dados.
 

@@ -29,6 +29,7 @@ import med.voll.VollMedApi_03.domain.medico.MedicoRepository;
 @RestController
 @RequestMapping("medicos")
 @SecurityRequirement(name = "bearer-key")
+// Informa ao Spring Doc que essa classe utiliza um token para login.
 public class MedicoController {
 
   @Autowired
