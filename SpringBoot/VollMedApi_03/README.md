@@ -4,6 +4,61 @@ Esta formação busca ensinar desde a criação de um projeto com Spring Boot, p
 
 É necessario os arquivos do curso anterior para continuidade deste curso.
 
+## Sumario
+
+1. [Adicionando consultas](#adicionando-consultas)
+    - [Entidade Consulta](#entidade-consulta)
+    - [Consulta repository](#consulta-repository)
+    - [DTOs de detalhamento e agendamento de consulta](#dtos-de-detalhamento-e-agendamento-de-consulta)
+    - [Migration para tabela consultas](#migration-para-tabela-consultas)
+
+2. [Consulta controller](#consulta-controller)
+
+3. [Exception personalizada](#exception-personalizada)
+
+4. [Classe de serviço para consultas](#classe-de-serviço-para-consultas)
+    - [Validando a integridade das informações](#validando-a-integridade-das-informações)
+
+5. [Escolhendo um médico aleatório](#escolhendo-um-médico-aleatório)
+    - [Consulta personalizada com JPQL](#consulta-personalizada-com-jpql)
+
+6. [Validações utilizando interface](#validações-utilizando-interface)
+    - [Aplicando as validações](#aplicando-as-validações)
+
+7. [Retornando entidade Consulta na classe de serviço](#retornando-entidade-consulta-na-classe-de-serviço)
+
+8. [Adicionando as consultas](#adicionando-as-consultas)
+
+9. [Tratando novo tipo de exceção](#tratando-novo-tipo-de-exceção)
+
+10. [Documentação com SpringDoc](#documentação-com-springdoc)
+    - [Configurando pagina da documentação para o token JWT](#configurando-pagina-da-documentação-para-o-token-jwt)
+
+11. [Testes automatizados para a API](#testes-automatizados-para-a-api)
+    - [Importante Vs Code IDE](#importante-vs-code-ide)
+    - [Testando a classe repository](#testando-a-classe-repository)
+
+12. [Banco de dados para os testes](#banco-de-dados-para-os-testes)
+    - [Criando um perfil de teste](#criando-um-perfil-de-teste)
+
+13. [Adicionando os cenários de teste](#adicionando-os-cenários-de-teste)
+
+14. [Cenário 1 para escolher médico aleatório](#cenário-1-para-escolher-médico-aleatório)
+    - [Persistindo os dados de teste](#persistindo-os-dados-de-teste)
+    - [Finalizando cenário 1 para escolher médico](#finalizando-cenário-1-para-escolher-médico)
+    - [Executando os testes](#executando-os-testes)
+    - [Criando um segundo cenário para escolher médico aleatório](#criando-um-segundo-cenário-para-escolher-médico-aleatório)
+
+15. [Testando a classe consulta controller](#testando-a-classe-consulta-controller)
+    - [Agendando consulta sem enviar os dados](#agendando-consulta-sem-enviar-os-dados)
+    - [Agendando consulta enviando os dados corretamente](#agendando-consulta-enviando-os-dados-corretamente)
+
+16. [Build do projeto](#build-do-projeto)
+    - [Efetuando o build com o Maven](#efetuando-o-build-com-o-maven)
+    - [Erro sistema não pode encontrar o arquivo maven-wrapper properties](#erro-sistema-não-pode-encontrar-o-arquivo-maven-wrapper-properties)
+
+17. [Executando a aplicação pelo terminal](#executando-a-aplicação-pelo-terminal)
+
 ## Adicionando consultas
 
 A primeira funcionalidade que vamos implementar sera a de agendar consultas, sendo necessario criar o controller e o pacote `consultas` onde iremos adicionar a entidade, os DTOs, o repository, entre outros. Vamos começar adicionando o domínio para consultas, no pacote `domain` vamos adicionar mais uma pasta `consulta` e dentro dela criar 4 novos arquivos, sendo eles a entidade *Consulta*, o repository e mais 2 DTOs.
@@ -116,6 +171,18 @@ No momento o método apenas imprime no console os dados enviados e retorna um DT
 
 Antes de qualquer coisa devemos primeiro fazer a validação das regras de negocio, e como boa pratica esses códigos não devem ficar na classe controller, ela é responsável apenas pelo fluxo de execução, para tal tarefa temos a classe Service.
 
+## Exception personalizada
+
+Antes de prosseguirmos vamos criar uma exception personalizada, pois utilizaremos ela diversas vezes. Dentro do pacote `domain` vamos adicionar a classe `ValidacaoException`, que ira apenas chamar o construtor da classe mãe passando a mensagem recebida como parâmetro.
+
+```java
+public class ValidacaoException extends RuntimeException {
+  public ValidacaoException(String mensagem) {
+    super(mensagem);
+  }
+}
+```
+
 ## Classe de serviço para consultas
 
 A classe de serviço serve para trabalharmos com as regras de negocio, algoritmos, cálculos, validações, ou seja tudo que é referente a como o processo deve ser executado. Exemplificando com o nosso projeto para a clinica, como o processo de agendamento de consulta deve acontecer? Quais os horários que serão possíveis de agendar? Caso o paciente não escolha um médico especifico, a aplicação que deve escolher um aleatório de mesma especialidade? As respostas para essas perguntas geralmente são colocadas na classe Service.
@@ -172,18 +239,6 @@ Utilizamos o `getReferenceById` ao invés do `findById` por que não é necessar
 
 Chegamos no código final que deve ser executado pelo método, ele deve criar uma consulta e salvar ela no banco de dados. Agora o proximo passo sera aplicarmos as validações e as regras de negocio.
 
-### Exception personalizada
-
-Antes de prosseguirmos vamos criar uma exception personalizada, pois utilizaremos ela diversas vezes. Dentro do pacote `domain` vamos adicionar a classe `ValidacaoException`, que ira apenas chamar o construtor da classe mãe passando a mensagem recebida como parâmetro.
-
-```java
-public class ValidacaoException extends RuntimeException {
-  public ValidacaoException(String mensagem) {
-    super(mensagem);
-  }
-}
-```
-
 ### Validando a integridade das informações
 
 As primeiras validações que vamos fazer é das informações enviadas pelo usuário, no caso o id do paciente e do médico. O repository do Spring ja possui um método para verificar se um id existe no banco de dados, que é o `existsById`. Porem a escolha do médico é opcional, ou seja o id pode ou não vir, mas caso venha é preciso validar.
@@ -201,7 +256,7 @@ public DadosDetalhamentoConsulta agendar(DadosAgendamentoConsulta dados) {
 }
 ```
 
-### Escolhendo um médico aleatório
+## Escolhendo um médico aleatório
 
 Como mencionado anteriormente o id do médico é opcional, e caso não seja informado a aplicação deve escolher aleatoriamente um médico de mesma especialidade disponível na data. Vamos então adicionar um novo método dentro da classe *AgendaDeConsultas* chamado `escolherMedico` que deve receber o DTO de agendamento de consultas. No momento esse DTO não esta recebendo a especialidade, mas basta adicionar o campo com `Especialidade especialidade`.
 
@@ -224,7 +279,7 @@ A funcionalidade de escolher um médico aleatório poderia ser feita dentro da c
 
 A consulta `escolherMedicoAleatorioLivreNaData` não esta seguindo o padrão das *consultas derivadas* que devem ser feitas em ingles, pois ela é uma consulta muito especifica e complexa.
 
-### Consulta personalizada para escolher médico
+### Consulta personalizada com JPQL
 
 Para criar essa query personalizada vamos utilizar o **JPQL** (Java Persistence Query Language) que faz consultas no banco de dados usando as entidades JPA. Ela é uma linguagem de consulta orientada a objetos semelhante ao SQL, mas trabalha com entidades, atributos e relacionamentos em vez de tabelas e colunas.
 
@@ -267,7 +322,7 @@ Medico escolherMedicoAleatorioLivreNaData(Especialidade especialidade, LocalDate
 
 No arquivo [JPQL_query](https://github.com/JuliuCesarC/Alura/blob/main/Java/SpringBoot/VollMedApi_03/JPQL_query.md) temos a explicação detalhada do método, para este documento vamos apenas dar uma olhada pelo funcionamento da query. Ela começa selecionando apenas médicos que estão ativos e tenham a mesma especialidade especificada no parâmetro `especialidade`, em seguida verificamos se o id do médico não esta em nenhuma outra consulta na mesma data, por fim ordena a lista de médicos de forma aleatória e seleciona o primeiro da lista.
 
-### Validações
+## Validações utilizando interface
 
 O proximo passo para o método `agendar` sera implementar as validações de regras de negocio, porem a forma como vamos executar essa tarefa é muito importante, devemos inserir todas as validações dentro do método? ou devemos criar uma classe com todas as validações e então chamar eles no método? Apesar de ambas serem uma opção, certamente não estão seguindo as boas praticas. A melhor solução seria criar **classes separadas para cada validação** o que torna o código pequeno, facilitando o teste, a manutenção, a aplicação e a legibilidade.
 
@@ -324,7 +379,7 @@ validadoresAgendar.forEach(v -> v.validar(dados));
 
 Com apenas uma linha adicionamos 6 validações até o momento, podendo ser expandida, alterada ou removida sem a necessidade de nenhuma modificação no método *agendar*.
 
-### Retornando entidade Consulta
+## Retornando entidade Consulta na classe de serviço
 
 Para finalizar o método `agendar` basta retornar a entidade Consulta, com isso temos o código final:
 
@@ -352,7 +407,7 @@ public DadosDetalhamentoConsulta agendar(DadosAgendamentoConsulta dados) {
 
 ## Adicionando as consultas
 
-Vamos retornar para a classe controller `ConsultaController` onde vamos chamar o método `agendar`.
+Vamos retornar para a classe controller `ConsultaController` onde vamos chamar o método que acabamos de finalizar `agendar`.
 
 ```java
 @Autowired
@@ -404,7 +459,7 @@ Podemos acessar as seguintes rotas:
 
 Dentro da pagina temos as rotas com seus parâmetros e o tipo de resposta esperado. Além disso podemos expandir alguma opção de rota e clicar no botão `Try it out` para abrir um bloco de texto onde iremos inserir os parâmetros necessários e então clicar em executar para testar a rota.
 
-### Configurando pagina da documentação para token JWT
+### Configurando pagina da documentação para o token JWT
 
 Apesar de ser possível testar as rotas pela pagina de documentação, todas elas são bloqueadas para uma requisição sem o token JWT, e por padrão não temos uma opção onde inserir esse token, sera necessario criar uma configuração para isso.
 
@@ -454,7 +509,7 @@ A biblioteca padrão para escrever testes automatizadas é a **JUnit**, mas não
 
 - **Spring Boot Test**: Fornece anotações e recursos adicionais para escrever testes de unidade e integração no contexto do Spring Boot. Ele inclui anotações como @SpringBootTest, @WebMvcTest, @DataJpaTest, entre outras, que permitem configurar e executar testes em diferentes camadas do aplicativo.
 
-### Importante
+### Importante Vs Code IDE
 
 Ao utilizar o VS Code como IDE, é preciso verificar se a extenção [Test Runner for Java](https://marketplace.visualstudio.com/items?itemName=vscjava.vscode-java-test) esta instalada, pois é ela que permite trabalharmos com testes automatizados em java.
 
@@ -503,7 +558,7 @@ public class MedicoRepositoryTest {}
 
 ## Adicionando os cenários de teste
 
-Precisamos testar o método de escolher médico, porem existem diversas cenários onde esse método sera executado, pode ser que não tenhamos nenhum médico da especialidade escolhida cadastrado, pode ser que não tenhamos um médico disponível na data, pode ser que tenhamos um médico e ele esteja disponível na data, ou seja, precisamos testar diversas possibilidades, e cada novo cenário sera um método diferente.
+Precisamos testar o método de escolher médico, porem existem diversas cenários onde esse método sera executado, pode ser que não tenhamos nenhum médico da especialidade escolhida cadastrado. Pode ser que não tenhamos um médico disponível na data. Pode ser que tenhamos um médico e ele esteja disponível na data. Ou seja, precisamos testar diversas possibilidades, e cada novo cenário sera um método diferente.
 
 Para diferenciar e tornar descritivo qual a função do métodos, podemos descrever ele no próprio nome, porem isso pode ser um pouco limitado, e para simplificar essa tarefa vamos utilizar um recurso do JUnit que é a anotação `@DisplayName`, onde nela podemos descrever o que o método deveria executar em cada cenário.
 
@@ -537,7 +592,7 @@ Salvamos o retorno da propriedade `medicoRepository` na variável `medicoLivre` 
 
 ### Persistindo os dados de teste
 
-Apesar do FlyWay aplicar todas as migrations o database de teste esta vazio, logo sera necessario criar todos os dados fictícios para executar o teste. Vamos utilizar o **EntityManager** para persistir os dados, além de criarmos métodos separadas para criar essas entidades.
+Apesar do FlyWay aplicar todas as migrations no database de teste, ela ainda continua vazio, logo sera necessario criar todos os dados fictícios para executar o teste. Vamos utilizar o **EntityManager** para persistir os dados, além de criarmos métodos separadas para criar essas entidades.
 
 ```java
 @Autowired
@@ -589,7 +644,7 @@ Na variável `proximaSegundaAs10` selecionamos a data atual e com o `with` chama
 
 Ao final do método o Spring faz o **RollBack** do banco de dados, para garantir que as informações de uma cenário não atrapalhem os próximos. Devido a esse fato é necessario sempre adicionar as informações que serão utilizas para o teste em cada método.
 
-## Executando os testes
+### Executando os testes
 
 Ao utilizar o VS Code temos algumas formas para executar os testes, primeiramente veremos as opções disponíveis na aba `Testing` que fica na lateral esquerda da janela, nele podemos:
 
@@ -607,9 +662,9 @@ Dentro da própria classe ao lado do numero de linhas sera exibido um ícone ver
 
 - Executar cada método individualmente : clicar no ícone de play na linha de declaração do método.
 
-## Criando um segundo cenário para escolher médico aleatório
+### Criando um segundo cenário para escolher médico aleatório
 
-Apesar de no primeiro cenário termos que adicionar diversos métodos para poder executar o teste, o segundo cenário se torna mais simples, bastando duplicar o anterior e adaptar para o novo caso.
+No primeiro cenário acaba sendo um pouco massante ter de adicionar diversos métodos para poder executar o teste, porem isso acaba facilitando para os próximos. Agora para o segundo cenário basta apenas duplicar o anterior e adaptar para o novo caso.
 
 ```java
 @Test
@@ -738,7 +793,7 @@ Para abrir a aba do Maven no VS Code ou no Intellij, temos um passo a passo dife
 
 Já para o **Intellij** é um pouco mais simples, no canto superior direito temo a opção `Maven`, e sera aberto a aba com as responsabilidades do Maven, dentre elas a `LifeCycle`.
 
-### Erro sistema não pode encontrar o arquivo "maven-wrapper.properties"
+### Erro sistema não pode encontrar o arquivo maven-wrapper properties
 
 Ao utilizar o VS Code e executar o `package`, pode ocorrer o erro do sistema não encontrar o arquivo `maven-wrapper.properties`, mas isso é causado apenas por que o **terminal** do vs code não esta na pasta raiz do projeto, bastando no terminal (`Ctrl` + `'`) abrir a pasta da aplicação.
 
